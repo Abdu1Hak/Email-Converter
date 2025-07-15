@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 import json
 
-from email_reader import email_body
+from email_reader import body
 
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
@@ -13,7 +13,7 @@ client = OpenAI(
     base_url="https://api.sambanova.ai/v1"
 )
 
-email_body = email_body.strip()
+body = body.strip()
 
 instruction = """
 You are a parser. Your task is to extract key information from the email body below and return it as a JSON object in the structure below.
@@ -57,7 +57,7 @@ Valid categories:
 
 --- 
 Email Body:
-""" + email_body
+""" + body
 
 response = client.chat.completions.create(
     model="Meta-Llama-3.1-8B-Instruct",
@@ -81,5 +81,4 @@ try:
 
 except json.JSONDecodeError as e:
     print("Failed to parse JSON.")
-    print(raw_output)
     print("Error:", e)

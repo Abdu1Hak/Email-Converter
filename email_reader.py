@@ -38,3 +38,58 @@ Taiye Murtala
 Customer Service Specialist  
 Del Condominium Rentals  
 Member of the Tridel Group"""
+
+import imaplib
+import email
+from email.header import decode_header
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+EMAIL_USER = os.getenv("EMAIL_USER")
+EMAIL_PASS = os.getenv("EMAIL_PASS")
+IMAP_SERVER = "imap.gmail.com"
+
+def clean_subject(subject):
+    decoded = decode_header(subject)[0]
+    if isinstance(decoded[0], bytes):
+        return decoded[0].decode(decoded[1] or "utf-8")
+    return decoded[0]
+
+def get_unread_emails():
+    mail = imaplib.IMAP4_SSL(IMAP_SERVER)
+    mail.login(EMAIL_USER, EMAIL_PASS)
+    mail.select("inbox")
+
+    status, messages = mail.search(None, 'UNSEEN')
+
+    email_ids = messages[0].split()
+    print(f"Found {len(email_ids)} unread email(s)")
+
+    for eid in email_ids:
+        status, msg_data = mail.fetch(eid, '(RFC822)')
+        raw_email = msg_data[0][1]
+        msg = email.message_from_bytes(raw_email)
+
+        subject = clean_subject(msg["Subject"])
+        sender = msg["From"]
+
+        print(f"From: {sender}")
+        print(f"Subject: {subject}")
+
+        if msg.is_multipart():
+            for part in msg.walk():
+                content_type = part.get_content_type()
+                if content_type == "text/plain":
+                    body = part.get_payload(decode=True).decode()
+                    print(f"Body:\n{body}")
+                    break
+        else:
+            body = msg.get_payload(decode=True).decode()
+            print(f"Body:\n{body}")
+        
+        print("=" * 50)
+
+    mail.logout()
+
+
