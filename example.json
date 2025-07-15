@@ -1,0 +1,20 @@
+{
+  "client name": "string (lowercase)",
+  "property address": "string (lowercase)",
+  "project title": "string (lowercase)",
+  "service description": "string (lowercase)",
+  "budget": null,
+  "category": "must match one of the provided options",
+  "preferred time": "null",
+  "preferred day": "string or null",
+  "alternate day": "string or null",
+  "preferred arrival time": "string or null",
+  "attachments": [
+    {
+      "filename": "string (case-sensitive)",
+      "filetype": "MIME type",
+      "url": "string",
+      "notes": "string or null"
+    }
+  ]
+}
