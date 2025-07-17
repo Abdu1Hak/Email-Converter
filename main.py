@@ -2,8 +2,6 @@ from email_reader import get_unread_emails
 from ai_extractor import extract_with_ai 
 import schedule
 import time
-import os
-
 
 def job():
     emails = get_unread_emails()

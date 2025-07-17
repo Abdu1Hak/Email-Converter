@@ -26,7 +26,6 @@ def extract_with_ai(mail):
         IMPORTANT:
         - If ALL values in the output would be null, empty, or missing, DO NOT return the JSON structure. INSTEAD, return ONLY the string "0" (without quotes or formatting).
         - If at least one value can be filled, return the JSON object as specified below.
-        - Do NOT return any explanation, commentary, or formatting—only the JSON or "EMPTY".
 
         All values must be in lowercase (except for file names and URLs). The 'category' field must match exactly one from the provided list. The scheduling fields may be null if not specified. If attachments are mentioned or included, add them in the 'attachments' array, each with a filename, filetype, url, and optional notes. If no attachments are present, use an empty array. If any value is not found, use null.
 
