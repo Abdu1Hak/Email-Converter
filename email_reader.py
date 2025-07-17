@@ -32,6 +32,7 @@ def get_unread_emails():
         email_ids = messages[0].split()
 
         if len(email_ids) == 0:
+            all_emails.clear()
             mail.logout()
             return []
 
@@ -49,7 +50,6 @@ def get_unread_emails():
                     for part in msg.walk():
                         content_type = part.get_content_type()
                         if content_type == "text/plain":
-
                             try:
                                 body = part.get_payload(decode=True).decode('utf-8')
                                 break
@@ -70,9 +70,11 @@ def get_unread_emails():
                             body = msg.get_payload(decode=True).decode('latin-1')
                         except:
                             body = "Could not decode email body"
-                
+
                 total_message = f"From: {sender}\nSubject: {subject}\n\n{body}"
                 all_emails.append(total_message)
+                
+                mail.store(eid, '+FLAGS', '\\Seen')
                 
             except Exception as e:
                 continue
@@ -80,6 +82,7 @@ def get_unread_emails():
         mail.logout()
         
     except Exception as e:
+        all_emails.clear()
         return []
 
     return all_emails

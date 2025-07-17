@@ -3,13 +3,15 @@ from ai_extractor import extract_with_ai
 import schedule
 import time
 
+counter = 1
+
 def job():
+    global counter
     emails = get_unread_emails()
-    extract_with_ai(emails)
+    extract_with_ai(emails, counter)
+    counter += 1
 
-job()
-
-schedule.every(1).minutes.do(job)
+schedule.every(5).seconds.do(job)
 
 while True:
     schedule.run_pending()
