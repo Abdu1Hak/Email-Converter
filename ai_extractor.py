@@ -13,6 +13,16 @@ client = OpenAI(
     base_url="https://api.sambanova.ai/v1"
 )
 
+def clean_ai_response(response_text: str) -> str:
+    text = response_text.strip()
+    if text.startswith("```"):
+        first_newline = text.find("\n")
+        if first_newline != -1:
+            text = text[first_newline + 1:]
+        if text.endswith("```"):
+            text = text[:-3]
+    return text.strip()
+
 def extract_with_ai(mail, counter):
     print("no mail is here")
     if not mail:
@@ -23,53 +33,60 @@ def extract_with_ai(mail, counter):
             continue 
         
         instruction = """
-        
-        You are a parser. Your task is to extract key information from the email body below and return it as a JSON object in the structure below.
+                    
+        Parse this email and return JSON. Do your best to figure out each field from the email content.
 
-        All values must be in lowercase (except for file names and URLs). The 'category' field must match exactly one from the provided list. The scheduling fields may be null if not specified. If attachments are mentioned or included, add them in the 'attachments' array, each with a filename, filetype, url, and optional notes. If no attachments are present, use an empty array. If any value is not found, use null.
+        IMPORTANT: Return ONLY the JSON object. No explanations, no additional text, no commentary, no formatting, no reasoning.
 
-        Return ONLY a valid JSON object, with no extra commentary or explanation, unless you may return nothing.
+        This email may not be a request, evaluvate this email and if it appearse to be a service request mark is_a_request to true
 
-        ---
-        Output format:
+        Rules:
+        - All text lowercase except names, file names, URLs
+        - Use your best judgment to infer missing information from context
+        - Match category to the closest option from the list
+        - If email is NOT asking for repair/maintenance work, set "is_a_request" to null
+        - Make reasonable assumptions about property type, service type, and timing based on the email content
 
+        JSON Format:
         {
-        "client name": "string",
-        "property address": "string",
-        "project title": "string",
-        "service description": "string",
-        "budget": "tbd",
-        "category": "one of the categories listed below",
-        "preferred time": "any time | morning | afternoon | evening | null",
-        "preferred day": "string or null",
-        "alternate day": "string or null",
-        "preferred arrival time": "string or null",
-        "attachments": [
-            {
-            "filename": "string",
-            "filetype": "string (e.g. image/jpeg)",
-            "url": "string",
-            "notes": "string or null"
-            }
-        ]
-
+        "is_a_request": true or null,
+        "client_name": "person's name",
+        "management_name": "company being contacted", 
+        "project_title": "what needs to be fixed",
+        "service_description": "description of the problem",
+        "budget": null,
+        "category": "pick from category list",
+        "preferred_time": null,
+        "preferred_day": "day name or null",
+        "alternate_day": "day name or null",
+        "preferred_arrival_time": "time or null",
+        "address": {
+            "unit_number": "apartment/unit number",
+            "street_number": "building number", 
+            "street_name": "street name",
+            "city": "city name",
+            "province": "province",
+            "country": "country", 
+            "postal_code": "postal code"
+        },
+        "attachments": [],
+        "property_details": {
+            "property_type": "residential or commercial",
+            "type_of_service": "installing, repairing, or replacing",
+            "budget": null,
+            "desired_start_time": "asap, within a month, within a few months, or within a year"
+        }
         }
 
-        Valid categories:
-        [
-        "roofing", "flooring", "electrical work", "decks & balconies", "transportation",
-        "windows", "handyman", "painting & wall finishes", "foundation", "doors",
-        "masonry", "drainage", "smart home", "basement", "demolition", "excavation",
-        "plumbing", "commercial cleaning", "garage", "energy advisors", "kitchen",
-        "residential cleaning", "snow removal", "bathroom", "landscaping", "hvac",
-        "general contractor", "siding"
-        ---
+        Categories:
+        ["roofing", "flooring", "electrical work", "decks & balconies", "transportation", "windows", "handyman", "painting & wall finishes", "foundation", "doors", "masonry", "drainage", "smart home", "basement", "demolition", "excavation", "plumbing", "commercial cleaning", "garage", "energy advisors", "kitchen", "residential cleaning", "snow removal", "bathroom", "landscaping", "hvac", "general contractor", "siding"]
+
         Email Body:
-    
+                
         """ + mail[i]
 
         response = client.chat.completions.create(
-            model="Meta-Llama-3.1-8B-Instruct",
+            model="Llama-3.3-Swallow-70B-Instruct-v0.4",
             messages=[
                 {
                     "role": "user",
@@ -80,18 +97,24 @@ def extract_with_ai(mail, counter):
 
         response_content = response.choices[0].message.content.strip()
 
+        response_content = clean_ai_response(response_content)
+
         print(f"Response for email {i+counter}: {response_content}")
     
         try:
             parsed_json = json.loads(response_content)
-            required_fields = ["client name", "property address", "project title", "service description"]
+            required_fields = ["client_name", "project_title", "address", "service_description",]
             all_required_present = True
+            if (parsed_json.get("is_a_request")) == None:
+                all_required_present = False
             
             for field in required_fields:
                 value = parsed_json.get(field)
-                if not value or value == "null" or not value.strip():
+                if value in [None, "", "null"]:
+                    print(f"Missing required field '{field}' in email {i+counter}. Skipping this email.")
                     all_required_present = False
                     break
+
             
             if all_required_present:
                 with open(f"parsed_email_{i+counter}.json", "w") as f:

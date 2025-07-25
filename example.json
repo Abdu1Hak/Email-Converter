@@ -1,14 +1,21 @@
 {
   "client name": "string (lowercase)",
-  "property address": "string (lowercase)",
+  "management name": "string",
   "project title": "string (lowercase)",
   "service description": "string (lowercase)",
   "budget": null,
   "category": "must match one of the provided options",
-  "preferred time": "null",
+  "preferred time": null,
   "preferred day": "string or null",
   "alternate day": "string or null",
   "preferred arrival time": "string or null",
+  "address": {
+    "street name": "string",
+    "city": "string",
+    "province": "string",
+    "country": "string",
+    "postal code": "string"
+  },
   "attachments": [
     {
       "filename": "string (case-sensitive)",
@@ -16,5 +23,11 @@
       "url": "string",
       "notes": "string or null"
     }
-  ]
+  ],
+  "property details": {
+    "property type": "Residential | Commercial",
+    "type of service": "installing | repairing | replacing",
+    "budget": null,
+    "desired start time": "ASAP | Within a month | Within a few months | Within a year"
+  }
 }
